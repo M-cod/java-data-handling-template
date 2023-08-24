@@ -1,6 +1,12 @@
 package com.epam.izh.rd.online.repository;
 
+import java.io.*;
+import java.nio.file.Files;
+
 public class SimpleFileRepository implements FileRepository {
+    final String resourcesPath = "src/main/resources/";
+    private long countFiles = 0L;
+    private long countDirs = 0L;
 
     /**
      * Метод рекурсивно подсчитывает количество файлов в директории
@@ -10,7 +16,19 @@ public class SimpleFileRepository implements FileRepository {
      */
     @Override
     public long countFilesInDirectory(String path) {
-        return 0;
+        File pathFile = new File(path);
+        if (!pathFile.exists()) {
+            pathFile = new File(resourcesPath + path);
+        }
+        File[] files = pathFile.listFiles();
+
+        assert files != null;
+        for (File file : files) {
+            if (file.isDirectory()) {
+                countFilesInDirectory(file.getPath());
+            } else countFiles++;
+        }
+        return countFiles;
     }
 
     /**
@@ -21,7 +39,21 @@ public class SimpleFileRepository implements FileRepository {
      */
     @Override
     public long countDirsInDirectory(String path) {
-        return 0;
+        File pathFile = new File(path);
+        if (!pathFile.exists()) {
+            pathFile = new File(resourcesPath + path);
+            countDirs++;
+
+        }
+        File[] files = pathFile.listFiles();
+        assert files != null;
+        for (File s : files) {
+            if (s.isDirectory()) {
+                countDirs++;
+                countDirsInDirectory(s.getPath());
+            }
+        }
+        return countDirs;
     }
 
     /**
@@ -32,7 +64,16 @@ public class SimpleFileRepository implements FileRepository {
      */
     @Override
     public void copyTXTFiles(String from, String to) {
-        return;
+        File dirFrom = new File(from);
+        File dirTo = new File(to);
+        if (!dirTo.getParentFile().exists()) {
+            dirTo.getParentFile().mkdirs();
+        }
+        try {
+            Files.copy(dirFrom.getAbsoluteFile().toPath(), dirTo.getAbsoluteFile().toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -44,6 +85,15 @@ public class SimpleFileRepository implements FileRepository {
      */
     @Override
     public boolean createFile(String path, String name) {
+        String targetFolder = "target/classes/";
+        File dir = new File(targetFolder + path);
+        dir.mkdir();
+        File file = new File(dir.getPath() + File.separator + name);
+        try {
+            return file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
@@ -55,6 +105,13 @@ public class SimpleFileRepository implements FileRepository {
      */
     @Override
     public String readFileFromResources(String fileName) {
-        return null;
+        File file = new File("src/main/resources/" + fileName);
+        String str = null;
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
+            str = bufferedReader.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return str;
     }
 }
